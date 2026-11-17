@@ -11,7 +11,7 @@
 
 <p align="center">
   <img alt="Status" src="https://img.shields.io/badge/status-in%20testing-e8a33d">
-  <img alt="Release" src="https://img.shields.io/badge/release-v0.1.0-d4af37">
+  <img alt="Release" src="https://img.shields.io/badge/release-v0.2.0-d4af37">
   <img alt="Archipelago" src="https://img.shields.io/badge/Archipelago-0.6.x-7b4fd8">
   <img alt="Game" src="https://img.shields.io/badge/Left%204%20Dead%202-Steam-b8161b">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0a63a8">
@@ -38,8 +38,8 @@
 ## What it is
 
 An [Archipelago](https://archipelago.gg) world for **Left 4 Dead 2**. All 14 official campaigns start locked except your
-starting one(s). Every chapter's safe room and every finale sends a check. Campaign unlocks, supplies and traps come
-from the multiworld.
+starting one(s). Safe rooms, finales, kill and teamwork milestones and weapon pickups send checks (up to **139**).
+Campaign unlocks, supplies, weapon drops and traps come from the multiworld.
 
 - **Pure VScript.** The mod is a scripted mutation, so there's no SourceMod, no Metamod and no `-insecure`. You stay
   on a normal, secure game.
@@ -56,10 +56,6 @@ from the multiworld.
   <tr>
     <td width="50%"><img src="docs/images/launcher.png" alt="The launcher"><br><sub>The launcher, in the game's own menu art, fonts and sounds</sub></td>
     <td width="50%"><img src="docs/images/launcher_connected.png" alt="The launcher, connected"><br><sub>Server, slot and password, then <b>CONNECT</b>. The client runs hidden.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/client.png" alt="The Archipelago client"><br><sub>Checks going out and items coming in (standard client shown)</sub></td>
-    <td><img src="docs/images/options_page.png" alt="The player options page"><br><sub>Player options with presets</sub></td>
   </tr>
 </table>
 
@@ -87,17 +83,24 @@ from the multiworld.
 - **Chat messages:** `[AP] Connected to the Archipelago client.`, `[AP] Received Pain Pills from …`, and so on.
 - **Campaign locking:** if you load a locked campaign, the mod tells you and moves you to one you have.
 - **Supplies for everyone:** every living survivor gets the item, bots included.
+- **Weapon drops:** a received gun or melee weapon is dropped in front of a survivor, with one for each of you.
+- **Counting as you play:** kills, revives, heals, defibs, closet rescues and weapon pickups count for the whole team.
 - **Items wait for you:** anything that arrives in a menu or a loading screen is handed out when the next round starts.
 
 ### Locations and items
 
-| Checks (57) | Items |
+| Checks (up to 139) | Items |
 |---|---|
-| Every chapter's safe room | **Campaign unlocks** (14, progression) |
-| Every campaign finale | **Supplies:** First Aid Kit, Pain Pills, Adrenaline, Defibrillator, Molotov, Pipe Bomb, Bile Bomb, Incendiary / Explosive Ammo Pack, Full Heal, Grenade Launcher, M60 |
-| All 14 official campaigns, Dead Center to The Last Stand | **Traps:** Tank, Witch, Horde |
+| Every chapter's safe room and every finale, across all 14 official campaigns (57) | **Campaign unlocks** (14, progression) |
+| *Kill milestones (38):* Tanks and Witches (1/5/10), crowning a Witch, each special infected (1/10/25/50), common infected (100 up to 5,000) | **Supplies:** First Aid Kit, Pain Pills, Adrenaline, Defibrillator, Molotov, Pipe Bomb, Bile Bomb, Incendiary / Explosive Ammo Pack, Full Heal |
+| *Weapon pickups (31):* the first time your team picks up each gun and melee weapon | **Weapon drops (32):** every gun from the Magnum to the M60, the Chainsaw, and every melee weapon |
+| *Teamwork milestones (13):* reviving, healing and defibbing teammates, and rescuing survivors from closets | **Traps (12)** |
 
-Location groups for hints: `Finales`, `Safe Rooms`, and one per campaign name.
+The three groups in italics are options, all on by default. Bigger milestones are expected later: logic wants more
+campaigns open before it counts on 5,000 kills or a rare weapon.
+
+Location groups for hints: `Finales`, `Safe Rooms`, `Kill Milestones`, `Teamwork Milestones`, `Weapon Pickups`, and
+one per campaign name.
 
 ### Goals
 | Goal | What finishes it |
@@ -109,23 +112,31 @@ Location groups for hints: `Finales`, `Safe Rooms`, and one per campaign name.
 |---|---|---|
 | `finales_required` | 5 | Finales to beat to goal (1–14) |
 | `starting_campaigns` | 1 | Campaigns unlocked at the start (1–14) |
+| `kill_milestones` | on | Kill milestone checks (38) |
+| `weapon_pickups` | on | Weapon pickup checks (31) |
+| `teamwork_milestones` | on | Teamwork milestone checks (13) |
+| `weapon_percentage` | 40 | How much of the non-trap filler is weapon drops (the rest is supplies) |
 | `trap_percentage` | 20 | How much of the filler becomes traps |
 | `death_link` | off | Share deaths with the multiworld |
 
-Presets: **Quick Run** (2 finales, 2 starting campaigns) and **Full Apocalypse** (all 14 finales, 40% traps,
-Death Link).
+Presets: **Quick Run** (2 finales, 2 starting campaigns, no kill or teamwork milestones) and **Full Apocalypse** (all 14
+finales, 40% traps, Death Link).
 
 ### Links
 - **Death Link:** when your whole team wipes, everyone on Death Link dies. When someone else dies, all your survivors die.
 
 <details>
-<summary><b>Traps (3)</b>: junk checks can bite back</summary>
+<summary><b>Traps (12)</b>: junk checks can bite back</summary>
 
 | Trap | Effect |
 |---|---|
 | **Tank Trap** | A Tank spawns |
 | **Witch Trap** | A Witch spawns |
 | **Horde Trap** | A panic event: here comes the horde |
+| **Smoker / Boomer / Hunter / Spitter / Jockey / Charger Trap** | That special infected spawns |
+| **Vomit Trap** | Everyone gets covered in bile |
+| **Fragile Trap** | Every standing survivor drops to 1 HP |
+| **Incap Trap** | One random survivor goes down |
 
 `trap_percentage` sets how much of the filler becomes traps.
 </details>
@@ -236,7 +247,8 @@ Prefer the standard client? Open the Archipelago Launcher → **Left 4 Dead 2 Cl
 <details>
 <summary><b>Done</b></summary>
 
-- The APWorld: 57 locations, campaign unlocks, supplies, traps, the finales goal, presets, location groups
+- The APWorld: up to 139 locations (safe rooms, finales, kill and teamwork milestones, weapon pickups), campaign
+  unlocks, supplies, weapon drops, 12 traps, the finales goal, presets, location groups
 - The VScript mutation: checks, items, traps, campaign locking, Death Link
 - The file bridge between the client and the game
 - The launcher: install, update, hidden background connection, play, the game's own look
@@ -244,7 +256,7 @@ Prefer the standard client? Open the Archipelago Launcher → **Left 4 Dead 2 Cl
 
 **In progress:** the first in-game playthrough
 
-**To do:** weapon unlocks as items · more trap types · an uninstall button · a Steam Workshop release
+**To do:** weapon unlocks as items · an uninstall button · a Steam Workshop release
 
 **Not planned:** SourceMod plugins (the mod stays VScript-only, so it works on a normal, secure game)
 

@@ -1,7 +1,7 @@
 "AddonInfo"
 {
 	addontitle			"Archipelago"
-	addonversion		"0.1.0"
+	addonversion		"0.2.0"
 	addonauthor			"Boi-027"
 	addonDescription	"Archipelago multiworld randomizer mutation. Pick the Archipelago mutation and run the Left 4 Dead 2 Client from the Archipelago Launcher."
 	addonContent_Script	1

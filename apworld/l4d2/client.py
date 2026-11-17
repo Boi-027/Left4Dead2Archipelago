@@ -12,7 +12,8 @@ import Utils
 from CommonClient import CommonContext, get_base_parser, gui_enabled, handle_url_arg, logger, server_loop
 from NetUtils import ClientStatus
 
-from .data import FINALE_MAPS, GAME, ITEM_ID_TO_CODE, MAP_TO_LOCATION_ID
+from .data import (FINALE_MAPS, GAME, ITEM_ID_TO_CODE, MAP_TO_LOCATION_ID, MILESTONE_LOCATION_IDS,
+                   PICKUP_TO_LOCATION_ID)
 
 MAX_ITEMS_PER_WRITE = 50  # keep in.txt small; FileToString returns null for files that are "too big"
 DEATHLINK_TTL = 30  # seconds an incoming DeathLink waits for the game before it is dropped
@@ -20,7 +21,7 @@ DEATHLINK_TTL = 30  # seconds an incoming DeathLink waits for the game before it
 
 def parse_out(text: str) -> dict | None:
     """Parse the game's out.txt. Returns None if it is incomplete (mid-write)."""
-    state = {"seed": "", "ack": 0, "dlseen": 0, "deaths": 0, "checks": []}
+    state = {"seed": "", "ack": 0, "dlseen": 0, "deaths": 0, "checks": [], "picks": [], "counts": {}}
     complete = False
     for line in text.replace("\x00", "").splitlines():
         parts = line.split()
@@ -31,11 +32,21 @@ def parse_out(text: str) -> dict | None:
             complete = True
         elif key == "seed":
             state["seed"] = rest[0] if rest else ""
-        elif key == "checks":
-            state["checks"] = rest
+        elif key in ("checks", "picks"):
+            state[key] = rest
+        elif key == "count" and len(rest) == 2:
+            state["counts"][rest[0]] = int(rest[1])
         elif key in ("ack", "dlseen", "deaths") and rest:
             state[key] = int(rest[0])
     return state if complete else None
+
+
+def location_ids(state: dict) -> set[int]:
+    """Every location the game's state has earned: maps reached, weapons picked up, milestones met."""
+    ids = {MAP_TO_LOCATION_ID[m] for m in state["checks"] if m in MAP_TO_LOCATION_ID}
+    ids |= {PICKUP_TO_LOCATION_ID[w] for w in state["picks"] if w in PICKUP_TO_LOCATION_ID}
+    ids |= {loc_id for stat, n, loc_id in MILESTONE_LOCATION_IDS if state["counts"].get(stat, 0) >= n}
+    return ids
 
 
 def clean(text: str) -> str:
@@ -104,7 +115,7 @@ class L4D2Context(CommonContext):
 
     async def sync_game(self, state: dict | None) -> None:
         if state and state["seed"] == self.seed_key:
-            checks = {MAP_TO_LOCATION_ID[m] for m in state["checks"] if m in MAP_TO_LOCATION_ID}
+            checks = location_ids(state) & self.server_locations  # options may have left some checks out
             new = checks - self.checked_locations
             if new and checks != self.last_sent:
                 self.last_sent = checks

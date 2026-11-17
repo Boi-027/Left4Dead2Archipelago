@@ -7,7 +7,18 @@ Left 4 Dead 2:
   finales_required: 5
   # How many random campaigns are unlocked at the start (1-14).
   starting_campaigns: 1
-  # Percent of filler items that are Tank / Witch / Horde traps (0-100).
+
+  # Extra checks on top of the 57 safe rooms and finales.
+  # Kill milestones: Tanks, Witches, crowns, each special infected, common infected (38 checks).
+  kill_milestones: true
+  # The first time your team picks up each gun and melee weapon (31 checks).
+  weapon_pickups: true
+  # Reviving, healing and defibbing teammates, closet rescues (13 checks).
+  teamwork_milestones: true
+
+  # Percent of the non-trap filler that are weapon drops; the rest are supplies (0-100).
+  weapon_percentage: 40
+  # Percent of filler items that are traps (0-100).
   trap_percentage: 20
   # When your team wipes, everyone on DeathLink dies, and vice versa.
   death_link: false

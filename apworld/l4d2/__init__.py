@@ -3,11 +3,12 @@ from typing import ClassVar
 
 import settings
 from BaseClasses import Item, ItemClassification, Location, Region, Tutorial
-from Options import DeathLink, OptionGroup, PerGameCommonOptions, Range
+from Options import DeathLink, DefaultOnToggle, OptionGroup, PerGameCommonOptions, Range
 from worlds.AutoWorld import WebWorld, World
 from worlds.LauncherComponents import Component, Type, components, icon_paths, launch
 
-from .data import CAMPAIGN_NAMES, CAMPAIGNS, GAME, ITEMS, LOCATIONS, SUPPLIES, TRAPS
+from .data import (CAMPAIGN_NAMES, CAMPAIGNS, GAME, ITEMS, LOCATIONS, MILESTONE_GROUPS, PICKUP_LOCATIONS,
+                   SUPPLIES, TRAPS, WEAPONS)
 
 
 def run_client(*args: str) -> None:
@@ -44,18 +45,46 @@ class StartingCampaigns(Range):
     default = 1
 
 
+class KillMilestones(DefaultOnToggle):
+    """Checks for killing Tanks, Witches, each special infected and common infected (team totals, 38 checks)."""
+    display_name = "Kill Milestones"
+
+
+class WeaponPickups(DefaultOnToggle):
+    """A check the first time your team picks up each gun and melee weapon (31 checks)."""
+    display_name = "Weapon Pickups"
+
+
+class TeamworkMilestones(DefaultOnToggle):
+    """Checks for reviving, healing, defibbing and rescuing teammates from closets (13 checks)."""
+    display_name = "Teamwork Milestones"
+
+
 class TrapPercentage(Range):
-    """Percent of filler items that are traps (Tank, Witch, Horde)."""
+    """Percent of filler items that are traps (Tank, Witch, Horde, special infected, Vomit, Fragile, Incap)."""
     display_name = "Trap Percentage"
     range_start = 0
     range_end = 100
     default = 20
 
 
+class WeaponPercentage(Range):
+    """Percent of the non-trap filler that are weapon drops (guns and melee weapons dropped at your feet).
+    The rest are supplies given to every survivor."""
+    display_name = "Weapon Drop Percentage"
+    range_start = 0
+    range_end = 100
+    default = 40
+
+
 @dataclass
 class L4D2Options(PerGameCommonOptions):
     finales_required: FinalesRequired
     starting_campaigns: StartingCampaigns
+    kill_milestones: KillMilestones
+    weapon_pickups: WeaponPickups
+    teamwork_milestones: TeamworkMilestones
+    weapon_percentage: WeaponPercentage
     trap_percentage: TrapPercentage
     death_link: DeathLink
 
@@ -67,10 +96,12 @@ class L4D2Web(WebWorld):
                           "setup_en.md", "setup/en", ["Boi-027"])]
     option_groups = [
         OptionGroup("Goal", [FinalesRequired, StartingCampaigns]),
-        OptionGroup("Challenge", [TrapPercentage, DeathLink]),
+        OptionGroup("Checks", [KillMilestones, WeaponPickups, TeamworkMilestones]),
+        OptionGroup("Items & Traps", [WeaponPercentage, TrapPercentage, DeathLink]),
     ]
     options_presets = {
-        "Quick Run": {"finales_required": 2, "starting_campaigns": 2, "trap_percentage": 10},
+        "Quick Run": {"finales_required": 2, "starting_campaigns": 2, "trap_percentage": 10,
+                      "kill_milestones": False, "teamwork_milestones": False},
         "Full Apocalypse": {"finales_required": 14, "starting_campaigns": 1, "trap_percentage": 40,
                             "death_link": True},
     }
@@ -85,8 +116,8 @@ class L4D2Location(Location):
 
 
 class L4D2World(World):
-    """Fight through the zombie apocalypse. Campaigns are locked until someone in the multiworld finds them,
-    and every safe room and finale you reach sends out an item."""
+    """Fight through the zombie apocalypse. Campaigns are locked until someone in the multiworld finds them.
+    Safe rooms, finales, kill and teamwork milestones and weapon pickups all send out items."""
     game = GAME
     web = L4D2Web()
     options_dataclass = L4D2Options
@@ -96,11 +127,16 @@ class L4D2World(World):
 
     item_name_to_id = {name: v[0] for name, v in ITEMS.items()}
     location_name_to_id = {name: v[0] for name, v in LOCATIONS.items()}
-    item_name_groups = {"Campaigns": set(CAMPAIGN_NAMES), "Traps": set(TRAPS), "Supplies": set(SUPPLIES)}
+    item_name_groups = {"Campaigns": set(CAMPAIGN_NAMES), "Traps": set(TRAPS), "Supplies": set(SUPPLIES),
+                        "Weapons": set(WEAPONS)}
     location_name_groups = {
         "Finales": {name for name in LOCATIONS if name.endswith("Finale")},
         "Safe Rooms": {name for name in LOCATIONS if name.endswith("Safe Room")},
-        **{campaign: {name for name, v in LOCATIONS.items() if v[2] == campaign} for campaign in CAMPAIGN_NAMES},
+        "Kill Milestones": set(MILESTONE_GROUPS["kills"]),
+        "Teamwork Milestones": set(MILESTONE_GROUPS["teamwork"]),
+        "Weapon Pickups": set(PICKUP_LOCATIONS),
+        **{campaign: {name for name, v in LOCATIONS.items() if v[2] == "map" and v[3] == campaign}
+           for campaign in CAMPAIGN_NAMES},
     }
 
     def generate_early(self) -> None:
@@ -113,18 +149,35 @@ class L4D2World(World):
         self.multiworld.regions.append(menu)
         for _, campaign, _ in CAMPAIGNS:
             region = Region(campaign, self.player, self.multiworld)
-            region.add_locations({name: v[0] for name, v in LOCATIONS.items() if v[2] == campaign}, L4D2Location)
+            region.add_locations({name: v[0] for name, v in LOCATIONS.items() if v[2] == "map" and v[3] == campaign},
+                                 L4D2Location)
             self.multiworld.regions.append(region)
             menu.connect(region, f"Play {campaign}", lambda state, c=campaign: state.has(c, self.player))
 
+        # Milestones and pickups happen anywhere; bigger ones expect more campaigns open (v[3] = campaigns needed).
+        extra = []
+        if self.options.kill_milestones:
+            extra += MILESTONE_GROUPS["kills"]
+        if self.options.teamwork_milestones:
+            extra += MILESTONE_GROUPS["teamwork"]
+        if self.options.weapon_pickups:
+            extra += PICKUP_LOCATIONS
+        for name in extra:
+            loc = L4D2Location(self.player, name, LOCATIONS[name][0], menu)
+            needed = LOCATIONS[name][3]
+            loc.access_rule = lambda state, n=needed: state.has_from_list(CAMPAIGN_NAMES, self.player, n)
+            menu.locations.append(loc)
+
     def create_items(self) -> None:
         pool = [self.create_item(name) for name in CAMPAIGN_NAMES if name not in self.starting]
-        pool += [self.create_filler() for _ in range(len(LOCATIONS) - len(pool))]
+        pool += [self.create_filler() for _ in range(len(self.multiworld.get_locations(self.player)) - len(pool))]
         self.multiworld.itempool += pool
 
     def get_filler_item_name(self) -> str:
         if self.random.randint(1, 100) <= self.options.trap_percentage.value:
             return self.random.choice(list(TRAPS))
+        if self.random.randint(1, 100) <= self.options.weapon_percentage.value:
+            return self.random.choice(list(WEAPONS))
         return self.random.choice(list(SUPPLIES))
 
     def create_item(self, name: str) -> L4D2Item:

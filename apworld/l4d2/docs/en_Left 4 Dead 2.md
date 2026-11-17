@@ -14,29 +14,31 @@ The host runs a small client that passes items and checks between Archipelago an
 
 ## What is a location check?
 
-Every **safe room** you reach and every **finale** you beat, 57 checks in all:
+Up to **139** checks:
 
-| Campaign | Checks | Campaign | Checks |
-|---|---|---|---|
-| Dead Center | 4 | No Mercy | 5 |
-| Dark Carnival | 5 | Crash Course | 2 |
-| Swamp Fever | 4 | Death Toll | 5 |
-| Hard Rain | 5 | Dead Air | 5 |
-| The Parish | 5 | Blood Harvest | 5 |
-| The Passing | 3 | Cold Stream | 4 |
-| The Sacrifice | 3 | The Last Stand | 2 |
+| Checks | How many | Option |
+|---|---|---|
+| Every chapter's **safe room** and every **finale** | 57 | always on |
+| **Kill milestones:** Tanks and Witches (1/5/10), crowning a Witch, each special infected (1/10/25/50), common infected (100 to 5,000) | 38 | `kill_milestones` |
+| **Weapon pickups:** the first time your team picks up each gun and melee weapon | 31 | `weapon_pickups` |
+| **Teamwork milestones:** reviving, healing and defibbing teammates, rescuing survivors from closets | 13 | `teamwork_milestones` |
 
-Location groups: `Finales`, `Safe Rooms`, and one group per campaign name.
+Milestones count the whole team's totals across every map you play. Logic expects the bigger milestones and the rarer
+weapons only once you have more campaigns open.
+
+Location groups: `Finales`, `Safe Rooms`, `Kill Milestones`, `Teamwork Milestones`, `Weapon Pickups`, and one group
+per campaign name.
 
 ## What items can I receive?
 
 | Type | Items | What happens |
 |---|---|---|
 | **Campaigns** (progression) | Dead Center … The Last Stand | Unlocks that campaign |
-| **Supplies** | First Aid Kit, Pain Pills, Adrenaline, Defibrillator, Molotov, Pipe Bomb, Bile Bomb, Incendiary / Explosive Ammo Pack, Full Heal, Grenade Launcher, M60 | Every living survivor gets one |
-| **Traps** | Tank Trap, Witch Trap, Horde Trap | Spawns it right away |
+| **Supplies** | First Aid Kit, Pain Pills, Adrenaline, Defibrillator, Molotov, Pipe Bomb, Bile Bomb, Incendiary / Explosive Ammo Pack, Full Heal | Every living survivor gets one |
+| **Weapon drops** | Every gun from the Magnum to the M60, the Chainsaw, and every melee weapon | Dropped in front of a survivor, one for each of you |
+| **Traps** | Tank, Witch, Horde, Smoker, Boomer, Hunter, Spitter, Jockey, Charger, Vomit, Fragile, Incap | Happens right away |
 
-Items show up in chat as `[AP] Received …`. Items that arrive while you're in a menu are delivered when the next
+Items show up in chat as `[AP] Received …`. Items that arrive while you're in a menu are handed out when the next
 round starts.
 
 ## What is the goal?
