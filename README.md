@@ -11,7 +11,7 @@
 
 <p align="center">
   <img alt="Status" src="https://img.shields.io/badge/status-in%20testing-e8a33d">
-  <img alt="Release" src="https://img.shields.io/badge/release-v0.2.0-d4af37">
+  <img alt="Release" src="https://img.shields.io/badge/release-v0.2.1-d4af37">
   <img alt="Archipelago" src="https://img.shields.io/badge/Archipelago-0.6.x-7b4fd8">
   <img alt="Game" src="https://img.shields.io/badge/Left%204%20Dead%202-Steam-b8161b">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0a63a8">
@@ -41,8 +41,8 @@ An [Archipelago](https://archipelago.gg) world for **Left 4 Dead 2**. All 14 off
 starting one(s). Safe rooms, finales, kill and teamwork milestones and weapon pickups send checks (up to **139**).
 Campaign unlocks, supplies, weapon drops and traps come from the multiworld.
 
-- **Pure VScript.** The mod is a scripted mutation, so there's no SourceMod, no Metamod and no `-insecure`. You stay
-  on a normal, secure game.
+- **Pure VScript.** The mod is a small script add-on, so there's no SourceMod, no Metamod and no `-insecure`. You
+  stay on a normal, secure game, in regular Co-op. With the client closed, the game plays completely normally.
 - **One-click install.** The launcher installs the mod and the APWorld, and finds the game and Archipelago by itself.
 - **Connects in the background.** Enter your room in the launcher and press **CONNECT**. The Archipelago client runs
   hidden, with no client window.
@@ -73,13 +73,13 @@ Campaign unlocks, supplies, weapon drops and traps come from the multiworld.
 - **Connection:** server, slot and password, then **CONNECT**. The Archipelago client runs hidden in the background, and
   the launcher shows its status (*CONNECTED AS …*) and the latest message. Server and slot are remembered; the password
   is not saved.
-- **Play:** **PLAY ARCHIPELAGO** starts Left 4 Dead 2 straight into the Archipelago mutation.
+- **Play:** **PLAY ARCHIPELAGO** starts Left 4 Dead 2. Then start any Co-op campaign.
 - **Looks like the game:** the main menu art, the menu font (Trade Gothic), the logo font (Future Rot), the menu
   sounds and the game icon, all read from your own install.
 
 ### In the game
-- **The Archipelago mutation:** start it from the launcher, the **Mutations** menu, or the console
-  (`map c1m1_hotel archipelago`).
+- **Regular Co-op:** play **Campaign** (or Realism) as usual. The mod switches on while the AP client is connected
+  and stays out of the way otherwise. Versus, Survival and Scavenge are left alone.
 - **Chat messages:** `[AP] Connected to the Archipelago client.`, `[AP] Received Pain Pills from …`, and so on.
 - **Campaign locking:** if you load a locked campaign, the mod tells you and moves you to one you have.
 - **Supplies for everyone:** every living survivor gets the item, bots included.
@@ -205,7 +205,7 @@ packed inside). For the tests, copy `apworld/l4d2` into an Archipelago source ch
 | Path | What |
 |---|---|
 | [`apworld/l4d2/`](apworld/l4d2) | The APWorld: items, locations, options, rules, client, tests, docs |
-| [`addon/`](addon) | The contents of `archipelago.vpk`: the mutation and its VScript |
+| [`addon/`](addon) | The contents of `archipelago.vpk`: the VScript add-on |
 | [`installer/`](installer) | The launcher, and the reader for the game's textures, fonts and sounds |
 | [`tools/build.py`](tools/build.py) | The build |
 </details>
@@ -249,7 +249,7 @@ Prefer the standard client? Open the Archipelago Launcher → **Left 4 Dead 2 Cl
 
 - The APWorld: up to 139 locations (safe rooms, finales, kill and teamwork milestones, weapon pickups), campaign
   unlocks, supplies, weapon drops, 12 traps, the finales goal, presets, location groups
-- The VScript mutation: checks, items, traps, campaign locking, Death Link
+- The VScript add-on: checks, items, traps, campaign locking, Death Link, tested loading in the real game
 - The file bridge between the client and the game
 - The launcher: install, update, hidden background connection, play, the game's own look
 </details>
@@ -264,10 +264,10 @@ Prefer the standard client? Open the Archipelago Launcher → **Left 4 Dead 2 Cl
 
 ## Troubleshooting
 
-- **No `[AP]` messages in chat:** make sure you started the **Archipelago** mutation, not regular Campaign, and that the
-  add-on is enabled in the game's **Add-ons** menu.
-- **`[AP] Waiting for the Archipelago client...` doesn't go away:** connect in the launcher first. If it still waits,
-  press **REINSTALL / UPDATE** so Archipelago knows where the game is.
+- **No `[AP]` messages in chat:** connect in the launcher first (*CONNECTED AS …*), play a **Co-op** campaign, and
+  check the add-on is enabled in the game's **Add-ons** menu. The game console shows `[AP] Archipelago add-on loaded`
+  when the add-on is running. If it still stays quiet, press **REINSTALL / UPDATE** so Archipelago knows where the
+  game is.
 - **CONNECT stays on CONNECTING...:** check that the server includes the port (`archipelago.gg:12345`) and that the
   slot name is exact. The line under the status shows the server's message.
 - **The launcher looks plain:** it couldn't find the game. Use **SET GAME FOLDER**.
@@ -294,6 +294,6 @@ launcher screenshots show art read from my own copy of the game.
 ## AI Usage Disclosure
 
 - This project was made with heavy use of AI.
-- The code (the APWorld and client, the VScript mutation and the launcher) and this documentation were written by
+- The code (the APWorld and client, the VScript add-on and the launcher) and this documentation were written by
   Claude (Anthropic) through Claude Code.
 - I directed the work: I chose the features and made the design decisions.

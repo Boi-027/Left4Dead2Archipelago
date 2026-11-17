@@ -19,8 +19,8 @@ Manual install: copy those two files yourself, then set `l4d2_options: game_fold
 
 1. In the installer/launcher, enter your room details and click **Connect**. The client runs hidden in the background.
    Or open the Archipelago Launcher and start **Left 4 Dead 2 Client**.
-2. Start Left 4 Dead 2 in the **Archipelago** mutation. Either use the launcher's *Play Archipelago* button, pick it
-   from the Mutations menu, or type `map c1m1_hotel archipelago` in the console.
+2. Start Left 4 Dead 2 (the launcher's *Play Archipelago* button just opens it) and play any **Co-op** campaign.
+   If it's locked, the mod moves you to one you have.
 3. Chat shows `[AP] Connected to the Archipelago client.` when the bridge is working.
 
 In co-op, only the host runs the client. Friends join the host's game normally.

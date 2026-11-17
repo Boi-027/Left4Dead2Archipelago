@@ -1,8 +1,9 @@
-// Archipelago mutation for Left 4 Dead 2.
-// VScript has no networking, so the Archipelago client (in the Archipelago Launcher) talks to us through
-// two files in left4dead2/ems/archipelago/:  in.txt (client -> game) and out.txt (game -> client).
+// Archipelago for Left 4 Dead 2. Runs in regular Co-op (and Realism); no mutation needed.
+// VScript has no networking, so the Archipelago client talks to us through two files in
+// left4dead2/ems/archipelago/:  in.txt (client -> game) and out.txt (game -> client).
+// The mod only does anything while the client is running: in.txt carries a heartbeat that must keep changing.
 
-MutationOptions <- {}
+printl("[AP] Archipelago add-on loaded");
 
 ::AP_IN <- "archipelago/in.txt"
 ::AP_OUT <- "archipelago/out.txt"
@@ -17,9 +18,10 @@ MutationOptions <- {}
 
 ::AP <- {
 	seed = "", ack = 0, dlseen = 0, deaths = 0, checks = {}, counts = {}, picks = {},   // persisted in out.txt
-	unlocked = {}, connected = false, warned = false, linkDeath = false, lockTimer = -1, lockTarget = null,
-	dirty = false
+	unlocked = {}, connected = false, linkDeath = false, lockTimer = -1, lockTarget = null,
+	dirty = false, lastBeat = null, beatTime = -100.0
 }
+::AP_LIVE_SECONDS <- 10.0  // the client counts as running while its heartbeat changed this recently
 
 // GetZombieType() -> stat name for kill milestones
 ::AP_ZOMBIE <- { [1] = "smoker", [2] = "boomer", [3] = "hunter", [4] = "spitter", [5] = "jockey", [6] = "charger",
@@ -178,20 +180,26 @@ MutationOptions <- {}
 		SendToServerConsole("changelevel " + ::AP.lockTarget);
 
 	local text = FileToString(::AP_IN);
-	if (text == null) {
-		if (!::AP.warned) ::AP_Say("Waiting for the Archipelago client (Archipelago Launcher > Left 4 Dead 2 Client)...");
-		::AP.warned = true;
-		return;
-	}
-	local seed = null, dl = 0, unlocked = {}, items = [], complete = false;
+	if (text == null) return;  // no client has ever run: play normally
+	local seed = null, dl = 0, beat = null, unlocked = {}, items = [], complete = false;
 	foreach (p in ::AP_Lines(text)) {
 		if (p[0] == "seed" && p.len() > 1) seed = p[1];
+		else if (p[0] == "beat" && p.len() > 1) beat = p[1];
 		else if (p[0] == "unlocked") for (local i = 1; i < p.len(); i++) unlocked[p[i]] <- true;
 		else if (p[0] == "dl") dl = p[1].tointeger();
 		else if (p[0] == "item" && p.len() > 2) items.append(p);
 		else if (p[0] == "end") complete = true;
 	}
 	if (!complete || seed == null) return;  // client is mid-write; try again next tick
+
+	// A leftover in.txt from an old session must not lock campaigns: wait for the heartbeat to move.
+	if (::AP.lastBeat != null && beat != ::AP.lastBeat) ::AP.beatTime = Time();
+	::AP.lastBeat = beat;
+	if (Time() - ::AP.beatTime > ::AP_LIVE_SECONDS) {
+		if (::AP.connected) ::AP_Say("Lost the Archipelago client. Items are paused until it's back.");
+		::AP.connected = false;
+		return;
+	}
 
 	if (seed != ::AP.seed) {
 		::AP.seed = seed; ::AP.ack = 0; ::AP.dlseen = 0; ::AP.deaths = 0; ::AP.checks = {};
@@ -224,16 +232,23 @@ MutationOptions <- {}
 	if (changed) ::AP_Save();
 }
 
-function OnGameplayStart() {
+// Called from both OnGameplayStart and round_start, whichever the game gives an add-on script; runs once per round.
+::AP_Start <- function() {
+	if (Entities.FindByName(null, "ap_think") != null) return;
+	local modeBase = "coop";
+	try { modeBase = Director.GetGameModeBase(); } catch (e) {}
+	printl("[AP] Round start on " + Director.GetMapName() + " (" + modeBase + ")");
+	if (modeBase != "coop") return;  // Co-op and Realism only; Versus, Survival and Scavenge stay untouched
 	::AP_Load();
 	::AP.linkDeath = false;
-	if (Entities.FindByName(null, "ap_think") == null) {
-		local ent = SpawnEntityFromTable("info_target", { targetname = "ap_think" });
-		ent.ValidateScriptScope();
-		ent.GetScriptScope().Think <- function() { ::AP_Poll(); return 1.0; };
-		AddThinkToEnt(ent, "Think");
-	}
+	local ent = SpawnEntityFromTable("info_target", { targetname = "ap_think" });
+	ent.ValidateScriptScope();
+	ent.GetScriptScope().Think <- function() { ::AP_Poll(); return 1.0; };
+	AddThinkToEnt(ent, "Think");
 }
+
+function OnGameplayStart() { ::AP_Start(); }
+function OnGameEvent_round_start(params) { ::AP_Start(); }
 
 function OnGameEvent_map_transition(params) { ::AP_Check(); }
 function OnGameEvent_finale_win(params) { ::AP_Check(); }
@@ -278,6 +293,7 @@ function OnGameEvent_item_pickup(params) {
 		}
 	}
 	if (weapon in ::AP.picks) return;
+	printl("[AP] First pickup: " + weapon);
 	::AP.picks[weapon] <- true;
 	::AP.dirty = true;
 }

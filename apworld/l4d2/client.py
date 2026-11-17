@@ -94,7 +94,8 @@ class L4D2Context(CommonContext):
         return clean(f"{self.room_seed}-{self.slot}").replace(" ", "_")
 
     def build_in(self, ack: int) -> str:
-        lines = [f"seed {self.seed_key}"]
+        # beat changes every 2 s; the game only acts while it keeps changing, so a stale in.txt is harmless
+        lines = [f"seed {self.seed_key}", f"beat {int(time.time()) // 2}"]
         unlocked = [ITEM_ID_TO_CODE[i.item][5:] for i in self.items_received
                     if ITEM_ID_TO_CODE.get(i.item, "").startswith("camp:")]
         lines.append("unlocked " + " ".join(unlocked))

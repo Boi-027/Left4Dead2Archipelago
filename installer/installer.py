@@ -25,7 +25,6 @@ from game_assets import GameAssets
 
 APWORLD = "l4d2.apworld"
 VPK = "archipelago.vpk"
-START_MAP = "c1m1_hotel"  # the mod moves you to an unlocked campaign if this one is locked
 BACKGROUND = "materials/console/background_menu_widescreen.vtf"
 SETTINGS = os.path.join(os.environ.get("LOCALAPPDATA", tempfile.gettempdir()), "L4D2Archipelago", "launcher.json")
 
@@ -389,9 +388,9 @@ class App(tk.Tk):
         self.destroy()
 
     def start_game(self):
-        subprocess.Popen([os.path.join(steam_path(), "steam.exe"), "-applaunch", "550", "+map", START_MAP,
-                          "archipelago"])
-        self.say("Launching Left 4 Dead 2 in Archipelago mode...", OK)
+        # Just open the game: the mod works in any Co-op campaign, and a normal lobby lets friends join.
+        subprocess.Popen([os.path.join(steam_path(), "steam.exe"), "-applaunch", "550"])
+        self.say("Launching Left 4 Dead 2... start any Co-op campaign. Locked ones send you to one you have.", OK)
 
 
 if __name__ == "__main__":
