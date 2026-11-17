@@ -1,0 +1,13 @@
+name: Survivor{number}
+game: Left 4 Dead 2
+description: Left 4 Dead 2 Archipelago player settings
+
+Left 4 Dead 2:
+  # How many campaign finales you must beat to goal (1-14).
+  finales_required: 5
+  # How many random campaigns are unlocked at the start (1-14).
+  starting_campaigns: 1
+  # Percent of filler items that are Tank / Witch / Horde traps (0-100).
+  trap_percentage: 20
+  # When your team wipes, everyone on DeathLink dies, and vice versa.
+  death_link: false

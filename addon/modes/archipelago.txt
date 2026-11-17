@@ -1,0 +1,13 @@
+"archipelago"
+{
+	"base"				"coop"
+	"maxplayers"		"4"
+	"hasdifficulty"		"1"
+	"singlechapter"		"0"
+
+	"DisplayTitle"		"Archipelago"
+	"ShortDescription"	"Multiworld randomizer: campaigns unlock as items."
+	"Description"		"Campaigns are locked until found in the Archipelago multiworld. Every safe room and finale sends an item. Run the Left 4 Dead 2 Client from the Archipelago Launcher before playing."
+	"Image"				"maps/any"
+	"Author"			"Boi-027"
+}
