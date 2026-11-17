@@ -1,7 +1,7 @@
 "AddonInfo"
 {
 	addontitle			"Archipelago"
-	addonversion		"0.2.1"
+	addonversion		"0.2.2"
 	addonauthor			"Boi-027"
 	addonDescription	"Archipelago multiworld randomizer. Connect the Left 4 Dead 2 Client, then play any Co-op campaign. Does nothing while the client is not running."
 	addonContent_Script	1

@@ -19,7 +19,8 @@ printl("[AP] Archipelago add-on loaded");
 ::AP <- {
 	seed = "", ack = 0, dlseen = 0, deaths = 0, checks = {}, counts = {}, picks = {},   // persisted in out.txt
 	unlocked = {}, connected = false, linkDeath = false, lockTimer = -1, lockTarget = null,
-	dirty = false, lastBeat = null, beatTime = -100.0
+	dirty = false, lastBeat = null, beatTime = -100.0,
+	msgSession = 0, msgSeen = 0   // chat messages from the client, persisted in out.txt
 }
 ::AP_LIVE_SECONDS <- 10.0  // the client counts as running while its heartbeat changed this recently
 
@@ -60,6 +61,7 @@ printl("[AP] Archipelago add-on loaded");
 		else if (p[0] == "checks") for (local i = 1; i < p.len(); i++) ::AP.checks[p[i]] <- true;
 		else if (p[0] == "picks") for (local i = 1; i < p.len(); i++) ::AP.picks[p[i]] <- true;
 		else if (p[0] == "count" && p.len() > 2) ::AP.counts[p[1]] <- p[2].tointeger();
+		else if (p[0] == "msgseen" && p.len() > 2) { ::AP.msgSession = p[1].tointeger(); ::AP.msgSeen = p[2].tointeger(); }
 	}
 }
 
@@ -69,7 +71,8 @@ printl("[AP] Archipelago add-on loaded");
 	foreach (weapon, _ in ::AP.picks) picks += " " + weapon;
 	foreach (stat, n in ::AP.counts) counts += "count " + stat + " " + n + "\n";
 	StringToFile(::AP_OUT, "seed " + ::AP.seed + "\nack " + ::AP.ack + "\ndlseen " + ::AP.dlseen +
-		"\ndeaths " + ::AP.deaths + "\nchecks" + checks + "\npicks" + picks + "\n" + counts + "end\n");
+		"\ndeaths " + ::AP.deaths + "\nchecks" + checks + "\npicks" + picks + "\n" + counts +
+		"msgseen " + ::AP.msgSession + " " + ::AP.msgSeen + "\nend\n");
 	::AP.dirty = false;
 }
 
@@ -181,13 +184,15 @@ printl("[AP] Archipelago add-on loaded");
 
 	local text = FileToString(::AP_IN);
 	if (text == null) return;  // no client has ever run: play normally
-	local seed = null, dl = 0, beat = null, unlocked = {}, items = [], complete = false;
+	local seed = null, dl = 0, beat = null, unlocked = {}, items = [], msgs = [], session = 0, complete = false;
 	foreach (p in ::AP_Lines(text)) {
 		if (p[0] == "seed" && p.len() > 1) seed = p[1];
 		else if (p[0] == "beat" && p.len() > 1) beat = p[1];
 		else if (p[0] == "unlocked") for (local i = 1; i < p.len(); i++) unlocked[p[i]] <- true;
 		else if (p[0] == "dl") dl = p[1].tointeger();
 		else if (p[0] == "item" && p.len() > 2) items.append(p);
+		else if (p[0] == "msgs" && p.len() > 1) session = p[1].tointeger();
+		else if (p[0] == "msg" && p.len() > 2) msgs.append(p);
 		else if (p[0] == "end") complete = true;
 	}
 	if (!complete || seed == null) return;  // client is mid-write; try again next tick
@@ -209,6 +214,18 @@ printl("[AP] Archipelago add-on loaded");
 	if (!::AP.connected) ::AP_Say("Connected to the Archipelago client.");
 	::AP.connected = true;
 	::AP.unlocked = unlocked;
+
+	// "Sent X to Y (location)" lines: show each once, in order, even across map changes
+	if (session != ::AP.msgSession) { ::AP.msgSession = session; ::AP.msgSeen = 0; ::AP.dirty = true; }
+	foreach (p in msgs) {
+		local id = p[1].tointeger();
+		if (id != ::AP.msgSeen + 1) continue;
+		::AP_Say(::AP_Join(p, 2));
+		::AP.msgSeen = id;
+		::AP.dirty = true;
+	}
+	if (::AP.dirty) ::AP_Save();
+
 	::AP_CheckLock();
 	if (::AP.lockTimer >= 0 || ::AP_Survivors().len() == 0) return;
 

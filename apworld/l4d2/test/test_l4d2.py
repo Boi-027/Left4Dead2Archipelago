@@ -60,12 +60,13 @@ class TestBridgeProtocol(L4D2TestBase):
     def test_parse_out(self) -> None:
         from ..client import location_ids, parse_out
         text = ("seed 1-1\nack 3\ndlseen 0\ndeaths 2\nchecks c1m1_hotel c1m4_atrium\npicks rifle_ak47 katana\n"
-                "count tank 5\ncount common 120\nend\n\x00")
+                "count tank 5\ncount common 120\nmsgseen 1700000000 4\nend\n\x00")
         state = parse_out(text)
         self.assertEqual(state["ack"], 3)
         self.assertEqual(state["deaths"], 2)
         self.assertEqual(state["checks"], ["c1m1_hotel", "c1m4_atrium"])
         self.assertEqual(state["counts"], {"tank": 5, "common": 120})
+        self.assertEqual(state["msgseen"], (1700000000, 4))
         expected = {LOCATIONS[name][0] for name in (
             "Dead Center Chapter 1 Safe Room", "Dead Center Finale", "Pick Up AK-47", "Pick Up Katana",
             "Kill a Tank", "Kill 5 Tanks", "Kill 100 Common Infected")}

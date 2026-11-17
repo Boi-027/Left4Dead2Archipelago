@@ -10,7 +10,7 @@ import time
 
 import Utils
 from CommonClient import CommonContext, get_base_parser, gui_enabled, handle_url_arg, logger, server_loop
-from NetUtils import ClientStatus
+from NetUtils import ClientStatus, NetworkItem
 
 from .data import (FINALE_MAPS, GAME, ITEM_ID_TO_CODE, MAP_TO_LOCATION_ID, MILESTONE_LOCATION_IDS,
                    PICKUP_TO_LOCATION_ID)
@@ -21,7 +21,8 @@ DEATHLINK_TTL = 30  # seconds an incoming DeathLink waits for the game before it
 
 def parse_out(text: str) -> dict | None:
     """Parse the game's out.txt. Returns None if it is incomplete (mid-write)."""
-    state = {"seed": "", "ack": 0, "dlseen": 0, "deaths": 0, "checks": [], "picks": [], "counts": {}}
+    state = {"seed": "", "ack": 0, "dlseen": 0, "deaths": 0, "checks": [], "picks": [], "counts": {},
+             "msgseen": (0, 0)}
     complete = False
     for line in text.replace("\x00", "").splitlines():
         parts = line.split()
@@ -36,6 +37,8 @@ def parse_out(text: str) -> dict | None:
             state[key] = rest
         elif key == "count" and len(rest) == 2:
             state["counts"][rest[0]] = int(rest[1])
+        elif key == "msgseen" and len(rest) == 2:
+            state["msgseen"] = (int(rest[0]), int(rest[1]))  # (client session, last chat message shown)
         elif key in ("ack", "dlseen", "deaths") and rest:
             state[key] = int(rest[0])
     return state if complete else None
@@ -66,6 +69,8 @@ class L4D2Context(CommonContext):
         self.last_deaths: int | None = None
         self.last_sent: set[int] = set()
         self.last_written = ""
+        self.session = int(time.time())  # chat message ids restart with each client run
+        self.messages: list[str] = []  # chat lines for the game, id = index + 1
 
     async def server_auth(self, password_requested: bool = False):
         if password_requested and not self.password:
@@ -80,6 +85,17 @@ class L4D2Context(CommonContext):
             self.last_sent = set()
             Utils.async_start(self.update_death_link(bool(slot_data.get("death_link"))))
 
+    def on_print_json(self, args: dict):
+        super().on_print_json(args)
+        # Received items already show in chat from the item queue; this adds the ones we send to others.
+        if args.get("type") == "ItemSend" and self.slot:
+            item = NetworkItem(*args["item"])
+            receiver = args["receiving"]
+            if item.player == self.slot and receiver != self.slot:
+                name = self.item_names.lookup_in_slot(item.item, receiver)
+                location = self.location_names.lookup_in_slot(item.location, self.slot)
+                self.messages.append(clean(f"Sent {name} to {self.player_names.get(receiver, '?')} ({location})"))
+
     def on_deathlink(self, data: dict):
         super().on_deathlink(data)
         self.deathlink_id = max(int(time.time()), self.deathlink_id + 1)
@@ -93,7 +109,7 @@ class L4D2Context(CommonContext):
     def seed_key(self) -> str:
         return clean(f"{self.room_seed}-{self.slot}").replace(" ", "_")
 
-    def build_in(self, ack: int) -> str:
+    def build_in(self, ack: int, msg_ack: int = 0) -> str:
         # beat changes every 2 s; the game only acts while it keeps changing, so a stale in.txt is harmless
         lines = [f"seed {self.seed_key}", f"beat {int(time.time()) // 2}"]
         unlocked = [ITEM_ID_TO_CODE[i.item][5:] for i in self.items_received
@@ -111,6 +127,9 @@ class L4D2Context(CommonContext):
             else:
                 sender = f" from {self.player_names.get(item.player, '?')}"
             lines.append(f"item {index + 1} {ITEM_ID_TO_CODE.get(item.item, 'none')} {clean(name + sender)}")
+        lines.append(f"msgs {self.session}")
+        for index in range(msg_ack, min(len(self.messages), msg_ack + MAX_ITEMS_PER_WRITE)):
+            lines.append(f"msg {index + 1} {self.messages[index]}")
         lines.append("end")
         return "\n".join(lines) + "\n"
 
@@ -133,7 +152,9 @@ class L4D2Context(CommonContext):
                 await self.send_death(f"{self.player_names[self.slot]}'s team was wiped out in Left 4 Dead 2.")
             self.last_deaths = state["deaths"]
 
-        content = self.build_in(state["ack"] if state and state["seed"] == self.seed_key else 0)
+        ours = state and state["seed"] == self.seed_key
+        session, shown = state["msgseen"] if ours else (0, 0)
+        content = self.build_in(state["ack"] if ours else 0, shown if session == self.session else 0)
         if content != self.last_written:
             tmp = os.path.join(self.bridge_dir, "in.tmp")
             with open(tmp, "w", encoding="utf-8", newline="\n") as f:
