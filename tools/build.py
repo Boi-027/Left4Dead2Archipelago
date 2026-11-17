@@ -35,7 +35,11 @@ def build_apworld() -> str:
 
 def build_vpk() -> str:
     out = os.path.join(DIST, "archipelago.vpk")
-    vpk.new(os.path.join(ROOT, "addon")).save(out)
+    pak = vpk.new(os.path.join(ROOT, "addon"))
+    pak.version = 1  # L4D2 only loads VPK v1 ("Unknown version 2 for vpk"); the library defaults to v2
+    pak.save(out)
+    with open(out, "rb") as f:
+        assert f.read(8) == b"\x34\x12\xaa\x55\x01\x00\x00\x00", "archipelago.vpk is not VPK v1"
     return out
 
 
