@@ -230,16 +230,20 @@ printl("[AP] Archipelago add-on loaded");
 	if (::AP.lockTimer >= 0 || ::AP_Survivors().len() == 0) return;
 
 	local changed = ::AP.dirty;
+	// One item per tick, and saved *before* applying: if an item ever crashes the game, the next start skips it
+	// instead of crashing again on the same item.
 	foreach (p in items) {
 		local index = p[1].tointeger();
 		if (index != ::AP.ack + 1) continue;
+		::AP.ack = index;
+		::AP_Save();
+		printl("[AP] Applying item " + index + ": " + p[2]);
 		try {
 			::AP_Apply(p[2], ::AP_Join(p, 3));
 		} catch (e) {
 			printl("[AP] Could not apply item " + p[2] + ": " + e);  // skip it rather than block the queue
 		}
-		::AP.ack = index;
-		changed = true;
+		break;
 	}
 	if (dl > ::AP.dlseen) {
 		::AP.dlseen = dl;

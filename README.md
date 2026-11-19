@@ -11,7 +11,7 @@
 
 <p align="center">
   <img alt="Status" src="https://img.shields.io/badge/status-in%20testing-e8a33d">
-  <img alt="Release" src="https://img.shields.io/badge/release-v0.2.2-d4af37">
+  <img alt="Release" src="https://img.shields.io/badge/release-v0.2.3-d4af37">
   <img alt="Archipelago" src="https://img.shields.io/badge/Archipelago-0.6.x-7b4fd8">
   <img alt="Game" src="https://img.shields.io/badge/Left%204%20Dead%202-Steam-b8161b">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2010%20%2F%2011-0a63a8">
