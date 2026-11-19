@@ -161,7 +161,8 @@ The client writes `in.txt` atomically, and both files end with an `end` line, so
 
 - **Left 4 Dead 2** on Steam (PC).
 - **Windows 10 or 11.**
-- An **Archipelago** install (**0.6.4** or newer) to generate, and a server to play on.
+- An **Archipelago** install (**0.6.8**) to generate, and a server to play on.
+- **MAKE SURE YOUR ARCHIPELAGO LAUNCHER IS ON VERSION 6.8 OR THIS WILL NOT WORK!**
 
 That's it: no SourceMod, Metamod, `-insecure` or Python.
 
@@ -274,6 +275,7 @@ Prefer the standard client? Open the Archipelago Launcher → **Left 4 Dead 2 Cl
 - **Locations don't match after an update:** your seed was made with another `.apworld` version. Regenerate it.
 - **Something else, or an idea?** [Open an issue](https://github.com/Boi-027/Left4Dead2Archipelago/issues), with
   what chat showed and what's in `left4dead2/ems/archipelago/`.
+- **MAKE SURE YOUR ARCHIPELAGO LAUNCHER IS ON VERSION 6.8 OR THIS WILL NOT WORK!**
 
 ---
 
